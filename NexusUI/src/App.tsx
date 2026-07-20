@@ -8,6 +8,7 @@ import UserApp from './pages/UserApp'
 import ProtectedRoute from './routes/ProtectedRoute'
 import ResolverRoute from './routes/ResolverRoute'
 import RoleRoute from './routes/RoleRoute'
+import TrustAndSafety from './pages/TrustAndSafety'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/trust" element={<TrustAndSafety />} />
         <Route
           path="/user/*"
           element={
