@@ -153,11 +153,11 @@ export default function Landing() {
           id="experience"
           className="mx-auto grid max-w-6xl gap-6 px-6 py-24 lg:grid-cols-[1.2fr,0.8fr]"
         >
-          <div className="rounded-3xl bg-slate-950 px-8 py-10 text-slate-100 shadow-2xl shadow-slate-950/10">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-300">
+          <div className="rounded-3xl border border-slate-200/70 bg-white p-8 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600">
               Platform rules
             </p>
-            <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-300">
+            <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-950">
               <li>Only registered users can create tickets.</li>
               <li>Only one active live ticket can exist per user at a time.</li>
               <li>
