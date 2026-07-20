@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1/admin/auth", tags=["auth-admin"])
     response_model=list[ResolverApplicationResponse],
 )
 async def list_resolver_applications(
-    profile=Annotated[object, Depends(get_current_admin_profile)],
+    profile: Annotated[object, Depends(get_current_admin_profile)],
     db: Annotated[AsyncSession, Depends(get_db_session)] = None,
 ):
     _ = profile
@@ -51,7 +51,7 @@ async def list_resolver_applications(
 async def approve_application(
     application_id: int,
     payload: ResolverApplicationReview,
-    profile=Annotated[object, Depends(get_current_admin_profile)],
+    profile: Annotated[object, Depends(get_current_admin_profile)],
     db: Annotated[AsyncSession, Depends(get_db_session)] = None,
 ):
     application = await get_resolver_application_by_id(db, application_id)
@@ -82,7 +82,7 @@ async def approve_application(
 async def reject_application(
     application_id: int,
     payload: ResolverApplicationReview,
-    profile=Annotated[object, Depends(get_current_admin_profile)],
+    profile: Annotated[object, Depends(get_current_admin_profile)],
     db: Annotated[AsyncSession, Depends(get_db_session)] = None,
 ):
     application = await get_resolver_application_by_id(db, application_id)

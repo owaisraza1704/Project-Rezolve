@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 @router.get("/me", response_model=ProfileResponse)
 async def get_me(
-    profile=Annotated[object, Depends(get_current_profile)],
+    profile: Annotated[object, Depends(get_current_profile)],
 ):
     return ProfileResponse(
         id=profile.id,
@@ -35,7 +35,7 @@ async def get_me(
 )
 async def submit_resolver_application(
     payload: ResolverApplicationSubmission,
-    profile=Annotated[object, Depends(get_current_profile)],
+    profile: Annotated[object, Depends(get_current_profile)],
     db: Annotated[AsyncSession, Depends(get_db_session)] = None,
 ):
     application = await create_resolver_application(db, profile.id, payload)
@@ -57,7 +57,7 @@ async def submit_resolver_application(
     response_model=list[ResolverApplicationResponse],
 )
 async def get_my_resolver_applications(
-    profile=Annotated[object, Depends(get_current_profile)],
+    profile: Annotated[object, Depends(get_current_profile)],
     db: Annotated[AsyncSession, Depends(get_db_session)] = None,
 ):
     applications = await get_resolver_applications_for_profile(db, profile.id)

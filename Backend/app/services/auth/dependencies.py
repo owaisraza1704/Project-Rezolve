@@ -1,27 +1,40 @@
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi import Header
 from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.db.connection import AsyncSessionLocal
 from app.services.auth.profiles import get_or_create_profile_by_auth_payload
-from app.services.auth.security import extract_bearer_token
 from app.services.auth.security import verify_supabase_token
+
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_bearer_token(
-    authorization: Annotated[str | None, Header()] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
 ) -> str:
-    return extract_bearer_token(authorization)
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Authorization header.",
+        )
+
+    if credentials.scheme.lower() != "bearer" or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format.",
+        )
+
+    return credentials.credentials
 
 
 async def get_auth_payload(
-    authorization: Annotated[str | None, Header()] = None,
+    token: Annotated[str, Depends(get_bearer_token)],
 ) -> dict:
-    token = extract_bearer_token(authorization)
     return verify_supabase_token(token)
 
 
@@ -53,12 +66,12 @@ def require_role(*allowed_roles: str):
 
 
 async def get_current_resolver_profile(
-    profile=Annotated[object, Depends(require_role("resolver"))],
+    profile: Annotated[object, Depends(require_role("resolver"))],
 ):
     return profile
 
 
 async def get_current_admin_profile(
-    profile=Annotated[object, Depends(require_role("admin"))],
+    profile: Annotated[object, Depends(require_role("admin"))],
 ):
     return profile

@@ -1,7 +1,7 @@
 fastapi
 uvicorn
-psycopg[binary]
 python-dotenv
 sqlalchemy
+greenlet
 asyncpg
-PyJWT
+PyJWT[crypto]
