@@ -12,10 +12,12 @@ export type ResolverApplicationSummary = {
 }
 
 export type AppProfile = {
-  id: string
+  id: number
+  auth_user_id: string
   email: string
   name: string | null
   role: AppRole
+  created_at: string
   resolverApplication?: ResolverApplicationSummary
 }
 

@@ -7,6 +7,7 @@ import {
   Clock,
   History,
   Lock,
+  LogOut,
   MessageSquare,
   Mic,
   MonitorUp,
@@ -16,7 +17,9 @@ import {
   Shield,
   Video,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
+import { useAuth } from '../context/AuthProvider'
 import { Badge, Button, Card } from '../components/UI'
 
 type UserView = 'dashboard' | 'create' | 'session'
@@ -37,7 +40,14 @@ const userState = {
 }
 
 export default function UserApp() {
+  const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
   const [view, setView] = useState<UserView>('dashboard')
+
+  const handleLogout = async () => {
+    navigate('/', { replace: true })
+    await signOut()
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -55,14 +65,24 @@ export default function UserApp() {
           />
         </div>
         <div className="border-t border-slate-200/60 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
-              AL
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+                {getUserInitials(profile?.name)}
+              </div>
+              <div className="min-w-0 text-sm">
+                <p className="truncate font-medium text-slate-900">{profile?.name || 'Project Nexus User'}</p>
+                <p className="truncate text-xs text-slate-500">{profile?.email || 'Signed-in user'}</p>
+              </div>
             </div>
-            <div className="text-sm">
-              <p className="font-medium text-slate-900">Alex Lee</p>
-              <p className="text-xs text-slate-500">Standard Tier</p>
-            </div>
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              aria-label="Log out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </aside>
@@ -74,6 +94,22 @@ export default function UserApp() {
       </main>
     </div>
   )
+}
+
+function getUserInitials(name: string | null | undefined) {
+  if (!name) {
+    return 'NU'
+  }
+
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) {
+    return 'NU'
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('')
 }
 
 function NavItem({

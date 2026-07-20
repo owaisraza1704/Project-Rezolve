@@ -45,10 +45,22 @@ export function SignIn() {
   const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === 'authenticated' && profile?.role === 'admin') {
-      navigate('/admin', { replace: true })
+    if (status !== 'authenticated' || !profile) {
+      return
     }
-  }, [navigate, profile?.role, status])
+
+    if (profile.role === 'admin') {
+      navigate('/admin', { replace: true })
+      return
+    }
+
+    if (profile.role === 'resolver') {
+      navigate('/resolver', { replace: true })
+      return
+    }
+
+    navigate('/', { replace: true })
+  }, [navigate, profile, status])
 
   return (
     <AuthShell
@@ -146,10 +158,22 @@ export function SignUp() {
   const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === 'authenticated' && profile?.role === 'admin') {
-      navigate('/admin', { replace: true })
+    if (status !== 'authenticated' || !profile) {
+      return
     }
-  }, [navigate, profile?.role, status])
+
+    if (profile.role === 'admin') {
+      navigate('/admin', { replace: true })
+      return
+    }
+
+    if (profile.role === 'resolver') {
+      navigate('/resolver', { replace: true })
+      return
+    }
+
+    navigate('/', { replace: true })
+  }, [navigate, profile, status])
 
   return (
     <AuthShell

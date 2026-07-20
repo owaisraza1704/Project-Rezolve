@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Activity, ArrowRight, Clock, Shield, Zap } from 'lucide-react'
 
 import { Badge, Button } from '../components/UI'
+import { useAuth } from '../context/AuthProvider'
 
 const steps = [
   {
@@ -25,6 +26,9 @@ const steps = [
 ]
 
 export default function Landing() {
+  const { status, profile } = useAuth()
+  const isSignedInUser = status === 'authenticated' && profile?.role === 'user'
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
@@ -49,11 +53,13 @@ export default function Landing() {
               Experience
             </a>
             <div className="ml-2 flex items-center gap-3 border-l border-slate-200 pl-4">
-              <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                Sign in
-              </Link>
-              <Link to="/signup">
-                <Button>Get started</Button>
+              {isSignedInUser ? null : (
+                <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                  Sign in
+                </Link>
+              )}
+              <Link to={isSignedInUser ? '/user' : '/signup'}>
+                <Button>{isSignedInUser ? 'Start a request' : 'Get started'}</Button>
               </Link>
             </div>
           </nav>
@@ -77,9 +83,9 @@ export default function Landing() {
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link to="/signup">
+                <Link to={isSignedInUser ? '/user' : '/signup'}>
                   <Button className="h-12 px-8 text-base shadow-lg shadow-indigo-600/20">
-                    Create account
+                    {isSignedInUser ? 'Start a request' : 'Create account'}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
