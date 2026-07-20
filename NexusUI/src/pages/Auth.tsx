@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { Link, useNavigate } from 'react-router-dom'
 import { Activity, ArrowRight, ShieldCheck } from 'lucide-react'
 
+import { useAuth } from '../context/AuthProvider'
+import { supabase } from '../lib/supabase'
 import { Button, Card } from '../components/UI'
 
 function AuthShell({
@@ -34,7 +37,18 @@ function AuthShell({
 }
 
 export function SignIn() {
+  const { status, errorMessage, profile } = useAuth()
   const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'authenticated' && profile?.role === 'admin') {
+      navigate('/admin', { replace: true })
+    }
+  }, [navigate, profile?.role, status])
 
   return (
     <AuthShell
@@ -48,9 +62,39 @@ export function SignIn() {
         </>
       }
     >
-      <form className="space-y-6" onSubmit={(event) => { event.preventDefault(); navigate('/user') }}>
-        <Field label="Email address" type="email" />
-        <Field label="Password" type="password" />
+      <form
+        className="space-y-6"
+        onSubmit={async (event) => {
+          event.preventDefault()
+          setFormError(null)
+          setIsSubmitting(true)
+
+          const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+
+          if (error) {
+            setFormError(error.message)
+            setIsSubmitting(false)
+            return
+          }
+
+          setIsSubmitting(false)
+        }}
+      >
+        <Field
+          label="Email address"
+          type="email"
+          value={email}
+          onChange={setEmail}
+        />
+        <Field
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+        />
 
         <div className="flex items-center justify-between text-sm">
           <label className="flex items-center gap-2 text-slate-700">
@@ -62,8 +106,20 @@ export function SignIn() {
           </a>
         </div>
 
-        <Button type="submit" className="h-11 w-full text-base">
-          Sign in
+        <AuthMessage
+          formError={formError}
+          providerError={errorMessage}
+          status={status}
+          idleMessage="Sign in with your Supabase account to continue."
+          successMessage="Signed in. Your workspace will unlock once app identity finishes loading."
+        />
+
+        <Button
+          type="submit"
+          className="h-11 w-full text-base"
+          disabled={isSubmitting || status === 'booting'}
+        >
+          {isSubmitting ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
 
@@ -80,7 +136,20 @@ export function SignIn() {
 }
 
 export function SignUp() {
+  const { status, errorMessage, profile } = useAuth()
   const navigate = useNavigate()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'authenticated' && profile?.role === 'admin') {
+      navigate('/admin', { replace: true })
+    }
+  }, [navigate, profile?.role, status])
 
   return (
     <AuthShell
@@ -94,13 +163,64 @@ export function SignUp() {
         </>
       }
     >
-      <form className="space-y-6" onSubmit={(event) => { event.preventDefault(); navigate('/user') }}>
-        <Field label="Full name" type="text" />
-        <Field label="Email address" type="email" />
-        <Field label="Password" type="password" />
+      <form
+        className="space-y-6"
+        onSubmit={async (event) => {
+          event.preventDefault()
+          setFormError(null)
+          setNotice(null)
+          setIsSubmitting(true)
 
-        <Button type="submit" className="h-11 w-full text-base">
-          Create account
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/login`,
+              data: {
+                name,
+                full_name: name,
+              },
+            },
+          })
+
+          if (error) {
+            setFormError(error.message)
+            setIsSubmitting(false)
+            return
+          }
+
+          setNotice('Account created. Check your email to confirm your address before continuing.')
+          setIsSubmitting(false)
+        }}
+      >
+        <Field label="Full name" type="text" value={name} onChange={setName} />
+        <Field
+          label="Email address"
+          type="email"
+          value={email}
+          onChange={setEmail}
+        />
+        <Field
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+        />
+
+        <AuthMessage
+          formError={formError}
+          providerError={errorMessage}
+          status={status}
+          idleMessage={notice}
+          successMessage="Signed in. Your workspace will unlock once app identity finishes loading."
+        />
+
+        <Button
+          type="submit"
+          className="h-11 w-full text-base"
+          disabled={isSubmitting || status === 'booting'}
+        >
+          {isSubmitting ? 'Creating account...' : 'Create account'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </form>
@@ -108,14 +228,68 @@ export function SignUp() {
   )
 }
 
-function Field({ label, type }: { label: string; type: string }) {
+function AuthMessage({
+  formError,
+  providerError,
+  status,
+  idleMessage,
+  successMessage,
+}: {
+  formError: string | null
+  providerError: string | null
+  status: 'booting' | 'anonymous' | 'authenticated' | 'error'
+  idleMessage: string | null
+  successMessage: string
+}) {
+  const message = formError || providerError
+
+  if (message) {
+    return <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>
+  }
+
+  if (status === 'booting') {
+    return (
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        Loading your session...
+      </p>
+    )
+  }
+
+  if (status === 'authenticated') {
+    return (
+      <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        {successMessage}
+      </p>
+    )
+  }
+
+  if (!idleMessage) {
+    return null
+  }
+
+  return <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">{idleMessage}</p>
+}
+
+function Field({
+  label,
+  type,
+  value,
+  onChange,
+}: {
+  label: string
+  type: string
+  value: string
+  onChange: (value: string) => void
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700">{label}</label>
       <input
         type={type}
         required
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
       />
     </div>
   )
