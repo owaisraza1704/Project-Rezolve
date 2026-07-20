@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -7,3 +9,4 @@ class ProfileResponse(BaseModel):
     email: str | None = None
     name: str | None = None
     role: str
+    created_at: datetime

@@ -1,6 +1,8 @@
 from sqlalchemy import BigInteger
+from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import Text
+from sqlalchemy import func
 from sqlalchemy import text
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -25,3 +27,8 @@ class ResolverApplication(Base):
     availability: Mapped[str | None] = mapped_column(Text)
     review_notes: Mapped[str | None] = mapped_column(Text)
     reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("profiles.id"))
+    created_at: Mapped[object] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )

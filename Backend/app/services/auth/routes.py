@@ -25,6 +25,7 @@ async def get_me(
         email=profile.email,
         name=profile.name,
         role=profile.role,
+        created_at=profile.created_at,
     )
 
 
@@ -49,6 +50,7 @@ async def submit_resolver_application(
         availability=application.availability,
         review_notes=application.review_notes,
         reviewed_by=application.reviewed_by,
+        created_at=application.created_at,
     )
 
 
@@ -72,6 +74,7 @@ async def get_my_resolver_applications(
             availability=application.availability,
             review_notes=application.review_notes,
             reviewed_by=application.reviewed_by,
+            created_at=application.created_at,
         )
         for application in applications
     ]

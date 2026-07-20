@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -18,6 +20,7 @@ class ResolverApplicationResponse(BaseModel):
     availability: str | None = None
     review_notes: str | None = None
     reviewed_by: int | None = None
+    created_at: datetime
 
 
 class ResolverApplicationReview(BaseModel):

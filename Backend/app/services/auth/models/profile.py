@@ -1,5 +1,7 @@
 from sqlalchemy import BigInteger
+from sqlalchemy import DateTime
 from sqlalchemy import Text
+from sqlalchemy import func
 from sqlalchemy import text
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -19,4 +21,9 @@ class Profile(Base):
         nullable=False,
         default="user",
         server_default=text("'user'"),
+    )
+    created_at: Mapped[object] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
     )
