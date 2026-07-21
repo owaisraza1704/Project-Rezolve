@@ -389,6 +389,7 @@ function PendingReviewView({
                 type="text"
                 value={formValues.fullName}
                 onChange={onFieldChange("fullName")}
+                disabled
               />
               <ResolverSelect
                 label="Primary Expertise"
@@ -459,11 +460,13 @@ function ResolverField({
   type,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   type: string;
   value: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -474,7 +477,8 @@ function ResolverField({
         type={type}
         value={value}
         onChange={onChange}
-        className="w-full rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2.5 text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+        disabled={disabled}
+        className="w-full rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2.5 text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
       />
     </div>
   );

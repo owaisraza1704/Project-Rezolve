@@ -26,8 +26,9 @@ const steps = [
 ];
 
 export default function Landing() {
-  const { status, profile } = useAuth();
+  const { signOut, status, profile } = useAuth();
   const isSignedInUser = status === "authenticated" && profile?.role === "user";
+  const isAuthenticated = status === "authenticated";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -59,7 +60,7 @@ export default function Landing() {
               Trust & Safety
             </Link>
             <div className="ml-2 flex items-center gap-3 border-l border-slate-200 pl-4">
-              {isSignedInUser ? null : (
+              {isAuthenticated ? null : (
                 <Link
                   to="/login"
                   className="text-sm font-medium text-slate-600 hover:text-slate-900"
@@ -67,11 +68,13 @@ export default function Landing() {
                   Sign in
                 </Link>
               )}
-              <Link to={isSignedInUser ? "/user" : "/signup"}>
-                <Button>
-                  {isSignedInUser ? "Start a request" : "Get started"}
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Button onClick={() => void signOut()}>Logout</Button>
+              ) : (
+                <Link to="/signup">
+                  <Button>Get started</Button>
+                </Link>
+              )}
             </div>
           </nav>
         </div>
