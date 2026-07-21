@@ -19,6 +19,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthProvider";
 import { Badge, Button } from "../components/UI";
+import { submitResolverApplication } from "../services/auth/resolverApplications";
 
 type ResolverStage = "pending" | "approved";
 type ResolverView = "pool" | "active";
@@ -55,7 +56,7 @@ const resolverState = {
 };
 
 export default function ResolverApp() {
-  const { profile, signOut, status } = useAuth();
+  const { accessToken, profile, refreshProfile, signOut, status } = useAuth();
   const navigate = useNavigate();
   const [stage, setStage] = useState<ResolverStage>(resolverState.stage);
   const [view, setView] = useState<ResolverView>("pool");
@@ -68,6 +69,9 @@ export default function ResolverApp() {
     experienceSummary: "",
     motivation: "",
   });
+  const [isSubmittingApplication, setIsSubmittingApplication] = useState(false);
+  const [applicationError, setApplicationError] = useState<string | null>(null);
+  const [applicationSuccess, setApplicationSuccess] = useState<string | null>(null);
   const isAnonymous = status === "anonymous";
   const isPending = stage === "pending";
 
@@ -93,11 +97,54 @@ export default function ResolverApp() {
     (
       event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
     ) => {
+      setApplicationError(null);
+      setApplicationSuccess(null);
       setApplicationForm((current) => ({
         ...current,
         [field]: event.target.value,
       }));
     };
+
+  const handleApplicationSubmit = async () => {
+    if (isAnonymous) {
+      return;
+    }
+
+    if (!accessToken) {
+      setApplicationError("Sign in again before submitting your resolver application.");
+      return;
+    }
+
+    if (!formHasRequiredApplicationFields(applicationForm)) {
+      setApplicationError("Please complete the required resolver application fields.");
+      return;
+    }
+
+    setIsSubmittingApplication(true);
+    setApplicationError(null);
+    setApplicationSuccess(null);
+
+    try {
+      await submitResolverApplication(accessToken, {
+        motivation: applicationForm.motivation.trim(),
+        experience_summary: buildExperienceSummary(applicationForm),
+        skills: buildSkills(applicationForm),
+        availability: "",
+      });
+
+      setApplicationSuccess("Application submitted. Your resolver access will stay locked until approval.");
+      setStage("pending");
+      await refreshProfile();
+    } catch (error) {
+      setApplicationError(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit your resolver application.",
+      );
+    } finally {
+      setIsSubmittingApplication(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[#0F172A] font-sans text-slate-200">
@@ -163,8 +210,11 @@ export default function ResolverApp() {
             profileName={profile?.name}
             profileEmail={profile?.email}
             formValues={applicationForm}
+            isSubmitting={isSubmittingApplication}
+            submitError={applicationError}
+            submitSuccess={applicationSuccess}
             onFieldChange={handleFieldChange}
-            onSubmit={() => setStage("pending")}
+            onSubmit={() => void handleApplicationSubmit()}
           />
         ) : null}
         {stage === "approved" && view === "pool" ? (
@@ -269,6 +319,9 @@ function PendingReviewView({
   profileName,
   profileEmail,
   formValues,
+  isSubmitting,
+  submitError,
+  submitSuccess,
   onFieldChange,
   onSubmit,
 }: {
@@ -284,6 +337,9 @@ function PendingReviewView({
     experienceSummary: string;
     motivation: string;
   };
+  isSubmitting: boolean;
+  submitError: string | null;
+  submitSuccess: string | null;
   onFieldChange: (
     field: keyof typeof formValues,
   ) => (
@@ -436,6 +492,18 @@ function PendingReviewView({
             onChange={onFieldChange("motivation")}
           />
 
+          {submitError ? (
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {submitError}
+            </div>
+          ) : null}
+
+          {submitSuccess ? (
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+              {submitSuccess}
+            </div>
+          ) : null}
+
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
             Applications are manually reviewed. Resolver tools stay locked until
             approval.
@@ -444,9 +512,14 @@ function PendingReviewView({
           <div className="flex justify-end pt-2">
             <Button
               type="submit"
+              disabled={isSubmitting || (!isAnonymous && !formHasRequiredApplicationFields(formValues))}
               className="bg-indigo-600 px-6 shadow-lg shadow-indigo-500/20 hover:bg-indigo-500"
             >
-              {isAnonymous ? "Create Account & Apply" : "Submit Application"}
+              {isAnonymous
+                ? "Create Account & Apply"
+                : isSubmitting
+                  ? "Submitting..."
+                  : "Submit Application"}
             </Button>
           </div>
         </form>
@@ -544,6 +617,35 @@ function getInitials(value: string) {
   const parts = value.split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase());
   return initials.join("") || "NX";
+}
+
+function formHasRequiredApplicationFields(formValues: {
+  expertise: string;
+  experienceSummary: string;
+  motivation: string;
+}) {
+  return Boolean(
+    formValues.expertise.trim() &&
+      formValues.experienceSummary.trim() &&
+      formValues.motivation.trim(),
+  );
+}
+
+function buildExperienceSummary(formValues: {
+  experienceSummary: string;
+  profileLink: string;
+}) {
+  const parts = [formValues.experienceSummary.trim()];
+
+  if (formValues.profileLink.trim()) {
+    parts.push(`Profile: ${formValues.profileLink.trim()}`);
+  }
+
+  return parts.filter(Boolean).join("\n\n");
+}
+
+function buildSkills(formValues: { expertise: string }) {
+  return formValues.expertise.trim();
 }
 
 function LivePoolView({ onOpenSession }: { onOpenSession: () => void }) {
