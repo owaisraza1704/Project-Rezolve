@@ -169,6 +169,7 @@ function OverviewView() {
 function ApplicationsView() {
   const { accessToken } = useAuth();
   const [tab, setTab] = useState<"pending" | "history">("pending");
+  const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
   const [apps, setApps] = useState<ResolverApplicationRecord[]>([]);
   const [profilesById, setProfilesById] = useState<Record<number, AppProfile>>(
     {},
@@ -240,6 +241,9 @@ function ApplicationsView() {
     tab === "pending" ? app.status === "pending" : app.status !== "pending",
   );
 
+  const selectedApp =
+    apps.find((application) => application.id === selectedAppId) || null;
+
   const handleReviewAction = async (
     applicationId: number,
     action: "approve" | "reject",
@@ -263,6 +267,7 @@ function ApplicationsView() {
           app.id === applicationId ? updatedApplication : app,
         ),
       );
+      setSelectedAppId(null);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -277,27 +282,23 @@ function ApplicationsView() {
   return (
     <div className="max-w-5xl mx-auto w-full">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Resolver Applications
-        </h1>
-        <p className="text-slate-600 mt-1">
-          Review and approve new experts joining the platform.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">Resolver Applications</h1>
+        <p className="text-slate-600 mt-1">Review and approve new experts joining the platform.</p>
       </div>
 
       <div className="flex gap-6 border-b border-slate-200 mb-6">
-        <button
-          onClick={() => setTab("pending")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === "pending" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+        <button 
+          onClick={() => setTab('pending')} 
+          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === 'pending' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
         >
           Pending Review
           <Badge variant="warning" className="ml-2 bg-amber-100 text-amber-700">
-            {apps.filter((a) => a.status === "pending").length}
+            {apps.filter(a => a.status === 'pending').length}
           </Badge>
         </button>
-        <button
-          onClick={() => setTab("history")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === "history" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+        <button 
+          onClick={() => setTab('history')} 
+          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === 'history' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
         >
           Processed History
         </button>
@@ -323,86 +324,149 @@ function ApplicationsView() {
           <tbody className="divide-y divide-slate-200">
             {isLoading ? (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                   Loading applications...
                 </td>
               </tr>
             ) : null}
             {!isLoading && filteredApps.length === 0 ? (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                   No applications found in this view.
                 </td>
               </tr>
-            ) : (
-              filteredApps.map((app) => (
-                <tr key={app.id} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900">
-                      {profilesById[app.profile_id]?.name ||
-                        "Unknown applicant"}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {`APP-${String(app.id).padStart(3, "0")}`}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">
-                    {app.skills || "Not provided"}
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">
-                    {formatJoinDate(app.created_at)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge
-                      variant={
-                        app.status === "pending"
-                          ? "warning"
-                          : app.status === "approved"
-                            ? "success"
-                            : "neutral"
-                      }
-                    >
-                      {app.status.toUpperCase()}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {app.status === "pending" ? (
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          disabled={activeActionId === app.id}
-                          onClick={() =>
-                            void handleReviewAction(app.id, "reject")
-                          }
-                          className="h-8 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50"
-                        >
-                          {activeActionId === app.id ? "Working..." : "Reject"}
-                        </Button>
-                        <Button
-                          disabled={activeActionId === app.id}
-                          onClick={() =>
-                            void handleReviewAction(app.id, "approve")
-                          }
-                          className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-500 text-white border-0"
-                        >
-                          {activeActionId === app.id ? "Working..." : "Approve"}
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-xs">Reviewed</span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
+            ) : filteredApps.map((app) => (
+              <tr key={app.id} className="hover:bg-slate-50/50">
+                <td className="px-6 py-4">
+                  <div className="font-medium text-slate-900">
+                    {profilesById[app.profile_id]?.name || "Unknown applicant"}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {`APP-${String(app.id).padStart(3, "0")}`}
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-slate-600">{app.skills || "Not provided"}</td>
+                <td className="px-6 py-4 text-slate-600">{formatJoinDate(app.created_at)}</td>
+                <td className="px-6 py-4">
+                  <Badge variant={app.status === 'pending' ? 'warning' : app.status === 'approved' ? 'success' : 'neutral'}>
+                    {app.status.toUpperCase()}
+                  </Badge>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <Button
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                    onClick={() => setSelectedAppId(app.id)}
+                  >
+                    View Details
+                  </Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+      </div>
+
+      {selectedApp && (
+        <ApplicationModal 
+          app={selectedApp} 
+          profile={profilesById[selectedApp.profile_id] || null}
+          isSubmitting={activeActionId === selectedApp.id}
+          onClose={() => setSelectedAppId(null)} 
+          onApprove={() => void handleReviewAction(selectedApp.id, "approve")} 
+          onReject={() => void handleReviewAction(selectedApp.id, "reject")} 
+        />
+      )}
+    </div>
+  );
+}
+
+function ApplicationModal({
+  app,
+  profile,
+  isSubmitting,
+  onClose,
+  onApprove,
+  onReject,
+}: {
+  app: ResolverApplicationRecord;
+  profile: AppProfile | null;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  if (!app) return null;
+  const details = parseResolverApplicationDetails(app);
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Resolver Application Details</h3>
+            <p className="text-sm text-slate-500">
+              {`APP-${String(app.id).padStart(3, "0")}`} • Submitted {formatJoinDate(app.created_at)}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg">
+            <span className="text-lg leading-none">x</span>
+          </button>
+        </div>
+
+        <div className="space-y-5 mb-8">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Applicant Name</p>
+              <p className="text-sm font-medium text-slate-900">{profile?.name || "Unknown applicant"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Email Address</p>
+              <p className="text-sm text-slate-900">{profile?.email || "No email"}</p>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Primary Expertise</p>
+            <Badge variant="brand">{app.skills || "Not provided"}</Badge>
+          </div>
+          {details.profileUrl ? (
+            <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Professional URL</p>
+            <a href={details.profileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">{details.profileUrl}</a>
+            </div>
+          ) : null}
+          {details.experienceSummary ? (
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Experience Summary</p>
+              <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 leading-relaxed">
+                {details.experienceSummary}
+              </p>
+            </div>
+          ) : null}
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Reason for joining</p>
+            <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 leading-relaxed">
+              {app.motivation || "Not provided"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Current Status</p>
+            <Badge variant={app.status === "pending" ? "warning" : app.status === "approved" ? "success" : "neutral"}>
+              {app.status.toUpperCase()}
+            </Badge>
+          </div>
+        </div>
+
+        {app.status === 'pending' && (
+          <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+            <Button disabled={isSubmitting} variant="outline" onClick={onReject} className="border-red-200 text-red-600 hover:bg-red-50">
+              {isSubmitting ? "Working..." : "Reject Application"}
+            </Button>
+            <Button disabled={isSubmitting} onClick={onApprove} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+              {isSubmitting ? "Working..." : "Approve Resolver"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -550,9 +614,23 @@ function formatJoinDate(value: string) {
   }).format(date);
 }
 
+function parseResolverApplicationDetails(app: ResolverApplicationRecord) {
+  const rawSummary = app.experience_summary || "";
+  const parts = rawSummary.split("\n\n").map((part) => part.trim()).filter(Boolean);
+  const profileLine = parts.find((part) => part.startsWith("Profile: "));
+  const experienceSummary = parts.filter((part) => !part.startsWith("Profile: ")).join("\n\n");
+
+  return {
+    experienceSummary,
+    profileUrl: profileLine ? profileLine.replace(/^Profile:\s*/, "") : "",
+  };
+}
+
 function ResolversManagementView() {
   const { accessToken } = useAuth();
   const [resolvers, setResolvers] = useState<AppProfile[]>([]);
+  const [approvedApplicationsByProfileId, setApprovedApplicationsByProfileId] =
+    useState<Record<number, ResolverApplicationRecord>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -571,12 +649,26 @@ function ResolversManagementView() {
       setErrorMessage(null);
 
       try {
-        const data = await fetchAdminResolvers(accessToken);
+        const [resolverProfiles, applications] = await Promise.all([
+          fetchAdminResolvers(accessToken),
+          fetchAdminResolverApplications(accessToken),
+        ]);
         if (!isMounted) {
           return;
         }
 
-        setResolvers(data);
+        const approvedApplications = applications
+          .filter((application) => application.status === "approved")
+          .reduce<Record<number, ResolverApplicationRecord>>(
+            (accumulator, application) => {
+              accumulator[application.profile_id] = application;
+              return accumulator;
+            },
+            {},
+          );
+
+        setResolvers(resolverProfiles);
+        setApprovedApplicationsByProfileId(approvedApplications);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -615,7 +707,7 @@ function ResolversManagementView() {
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
             <tr>
               <th className="px-6 py-4">Resolver Details</th>
-              <th className="px-6 py-4">Approval Status</th>
+              <th className="px-6 py-4">Expertise</th>
               <th className="px-6 py-4">Joined</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
@@ -664,7 +756,10 @@ function ResolversManagementView() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant="success">APPROVED</Badge>
+                      <Badge variant="brand">
+                        {approvedApplicationsByProfileId[resolver.id]?.skills ||
+                          "Not provided"}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-700">
                       {formatJoinDate(resolver.created_at)}
