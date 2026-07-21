@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { useState } from "react";
+import type { ChangeEvent, ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   FileText,
@@ -55,16 +55,49 @@ const resolverState = {
 };
 
 export default function ResolverApp() {
-  const { signOut } = useAuth();
+  const { profile, signOut, status } = useAuth();
   const navigate = useNavigate();
   const [stage, setStage] = useState<ResolverStage>(resolverState.stage);
   const [view, setView] = useState<ResolverView>("pool");
+  const [applicationForm, setApplicationForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    expertise: "Infrastructure & Cloud",
+    profileLink: "",
+    experienceSummary: "",
+    motivation: "",
+  });
+  const isAnonymous = status === "anonymous";
   const isPending = stage === "pending";
+
+  useEffect(() => {
+    setStage(profile?.role === "resolver" ? "approved" : "pending");
+  }, [profile?.role]);
+
+  useEffect(() => {
+    setApplicationForm((current) => ({
+      ...current,
+      fullName: profile?.name || current.fullName,
+      email: profile?.email || current.email,
+    }));
+  }, [profile?.email, profile?.name]);
 
   const handleLogout = async () => {
     navigate("/", { replace: true });
     await signOut();
   };
+
+  const handleFieldChange =
+    (field: keyof typeof applicationForm) =>
+    (
+      event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    ) => {
+      setApplicationForm((current) => ({
+        ...current,
+        [field]: event.target.value,
+      }));
+    };
 
   return (
     <div className="flex min-h-screen bg-[#0F172A] font-sans text-slate-200">
@@ -78,7 +111,9 @@ export default function ResolverApp() {
             Nexus Ops
           </span>
         </Link>
-        {isPending ? <LockedSidebar onLogout={handleLogout} /> : null}
+        {isPending ? (
+          <LockedSidebar onLogout={!isAnonymous ? handleLogout : undefined} />
+        ) : null}
         {!isPending ? (
           <>
             <div className="flex-1 space-y-1 p-4">
@@ -123,7 +158,14 @@ export default function ResolverApp() {
 
       <main className="flex flex-1 flex-col overflow-hidden bg-[#0F172A]">
         {stage === "pending" ? (
-          <PendingReviewView onSubmit={() => setStage("approved")} />
+          <PendingReviewView
+            isAnonymous={isAnonymous}
+            profileName={profile?.name}
+            profileEmail={profile?.email}
+            formValues={applicationForm}
+            onFieldChange={handleFieldChange}
+            onSubmit={() => setStage("pending")}
+          />
         ) : null}
         {stage === "approved" && view === "pool" ? (
           <LivePoolView onOpenSession={() => setView("active")} />
@@ -136,7 +178,11 @@ export default function ResolverApp() {
   );
 }
 
-function LockedSidebar({ onLogout }: { onLogout: () => Promise<void> }) {
+function LockedSidebar({
+  onLogout,
+}: {
+  onLogout?: () => Promise<void>;
+}) {
   return (
     <>
       <div className="relative flex-1 p-4">
@@ -159,14 +205,18 @@ function LockedSidebar({ onLogout }: { onLogout: () => Promise<void> }) {
             <div className="h-3 w-3 rounded-full bg-slate-600" />
             <span className="text-sm font-medium">Offline</span>
           </div>
-          <button
-            type="button"
-            onClick={() => void onLogout()}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
-            aria-label="Log out"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          {onLogout ? (
+            <button
+              type="button"
+              onClick={() => void onLogout()}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+              aria-label="Log out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          ) : (
+            <div className="h-10 w-10" />
+          )}
         </div>
       </div>
     </>
@@ -214,7 +264,33 @@ function NavItem({
   );
 }
 
-function PendingReviewView({ onSubmit }: { onSubmit: () => void }) {
+function PendingReviewView({
+  isAnonymous,
+  profileName,
+  profileEmail,
+  formValues,
+  onFieldChange,
+  onSubmit,
+}: {
+  isAnonymous: boolean;
+  profileName?: string | null;
+  profileEmail?: string;
+  formValues: {
+    fullName: string;
+    email: string;
+    password: string;
+    expertise: string;
+    profileLink: string;
+    experienceSummary: string;
+    motivation: string;
+  };
+  onFieldChange: (
+    field: keyof typeof formValues,
+  ) => (
+    event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => void;
+  onSubmit: () => void;
+}) {
   return (
     <div className="flex flex-1 items-center justify-center p-8">
       <div className="w-full max-w-4xl rounded-2xl border border-slate-700/60 bg-[#1E293B] p-8 shadow-2xl">
@@ -226,8 +302,9 @@ function PendingReviewView({ onSubmit }: { onSubmit: () => void }) {
             Apply as a Resolver
           </h1>
           <p className="mx-auto max-w-xl text-slate-400">
-            Share your experience and areas of expertise. Our team reviews every
-            application before unlocking the resolver workspace.
+            {isAnonymous
+              ? "Join the global network of experts. Applications are manually reviewed."
+              : "Share your experience and areas of expertise. Our team reviews every application before unlocking the resolver workspace."}
           </p>
         </div>
 
@@ -238,29 +315,124 @@ function PendingReviewView({ onSubmit }: { onSubmit: () => void }) {
             onSubmit();
           }}
         >
-          <div className="grid gap-4 md:grid-cols-2">
-            <ResolverField label="Full name" type="text" />
-            <ResolverSelect
-              label="Primary expertise"
-              options={[
-                "Infrastructure & Cloud",
-                "Database & Storage",
-                "Frontend & UX",
-                "Backend & API",
-              ]}
-            />
-          </div>
+          {isAnonymous ? (
+            <div className="rounded-2xl border border-slate-700/50 bg-[#0F172A]/50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+                1. Create account
+              </p>
 
-          <ResolverField label="Professional profile or portfolio" type="url" />
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <ResolverField
+                  label="Full Name"
+                  type="text"
+                  value={formValues.fullName}
+                  onChange={onFieldChange("fullName")}
+                />
+                <ResolverField
+                  label="Email Address"
+                  type="email"
+                  value={formValues.email}
+                  onChange={onFieldChange("email")}
+                />
+              </div>
+
+              <div className="mt-4">
+                <ResolverField
+                  label="Password"
+                  type="password"
+                  value={formValues.password}
+                  onChange={onFieldChange("password")}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-[#0F172A] p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-lg font-semibold text-indigo-300">
+                  {getInitials(profileName || profileEmail || "NX")}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">
+                    Applying with your existing account
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    {profileName || "Resolver applicant"}
+                    {profileEmail ? ` • ${profileEmail}` : ""}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isAnonymous ? (
+            <div className="space-y-5 pt-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+                2. Resolver profile
+              </p>
+
+              <ResolverSelect
+                label="Primary Expertise"
+                options={[
+                  "Infrastructure & Cloud",
+                  "Database & Storage",
+                  "Frontend & UX",
+                  "Backend & API",
+                ]}
+                value={formValues.expertise}
+                onChange={onFieldChange("expertise")}
+              />
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              <ResolverField
+                label="Full Name"
+                type="text"
+                value={formValues.fullName}
+                onChange={onFieldChange("fullName")}
+              />
+              <ResolverSelect
+                label="Primary Expertise"
+                options={[
+                  "Infrastructure & Cloud",
+                  "Database & Storage",
+                  "Frontend & UX",
+                  "Backend & API",
+                ]}
+                value={formValues.expertise}
+                onChange={onFieldChange("expertise")}
+              />
+            </div>
+          )}
+
+          <ResolverField
+            label={
+              isAnonymous
+                ? "Professional Experience URL (LinkedIn/GitHub)"
+                : "Professional Experience URL (LinkedIn/GitHub)"
+            }
+            type="url"
+            value={formValues.profileLink}
+            onChange={onFieldChange("profileLink")}
+          />
+
+          {!isAnonymous ? null : null}
 
           <ResolverTextarea
             label="Tell us about your experience"
             placeholder="Share the kind of problems you solve best and the environments you work in most often."
+            value={formValues.experienceSummary}
+            onChange={onFieldChange("experienceSummary")}
           />
 
           <ResolverTextarea
-            label="Why do you want to join Project Nexus?"
-            placeholder="Tell us how you like to help users and what kind of support work you enjoy."
+            label={isAnonymous ? "Why do you want to join Nexus?" : "Why do you want to join Nexus?"}
+            placeholder={
+              isAnonymous
+                ? ""
+                : "Tell us how you like to help users and what kind of support work you enjoy."
+            }
+            value={formValues.motivation}
+            onChange={onFieldChange("motivation")}
           />
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
@@ -273,7 +445,7 @@ function PendingReviewView({ onSubmit }: { onSubmit: () => void }) {
               type="submit"
               className="bg-indigo-600 px-6 shadow-lg shadow-indigo-500/20 hover:bg-indigo-500"
             >
-              Submit application
+              {isAnonymous ? "Create Account & Apply" : "Submit Application"}
             </Button>
           </div>
         </form>
@@ -282,7 +454,17 @@ function PendingReviewView({ onSubmit }: { onSubmit: () => void }) {
   );
 }
 
-function ResolverField({ label, type }: { label: string; type: string }) {
+function ResolverField({
+  label,
+  type,
+  value,
+  onChange,
+}: {
+  label: string;
+  type: string;
+  value: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+}) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-slate-300">
@@ -290,6 +472,8 @@ function ResolverField({ label, type }: { label: string; type: string }) {
       </label>
       <input
         type={type}
+        value={value}
+        onChange={onChange}
         className="w-full rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2.5 text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
       />
     </div>
@@ -299,16 +483,24 @@ function ResolverField({ label, type }: { label: string; type: string }) {
 function ResolverSelect({
   label,
   options,
+  value,
+  onChange,
 }: {
   label: string;
   options: string[];
+  value: string;
+  onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
 }) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-slate-300">
         {label}
       </label>
-      <select className="w-full rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2.5 text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2.5 text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+      >
         {options.map((option) => (
           <option key={option}>{option}</option>
         ))}
@@ -320,9 +512,13 @@ function ResolverSelect({
 function ResolverTextarea({
   label,
   placeholder,
+  value,
+  onChange,
 }: {
   label: string;
   placeholder: string;
+  value: string;
+  onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
 }) {
   return (
     <div>
@@ -332,10 +528,18 @@ function ResolverTextarea({
       <textarea
         rows={4}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="w-full resize-none rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2.5 text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
       />
     </div>
   );
+}
+
+function getInitials(value: string) {
+  const parts = value.split(/\s+/).filter(Boolean);
+  const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase());
+  return initials.join("") || "NX";
 }
 
 function LivePoolView({ onOpenSession }: { onOpenSession: () => void }) {

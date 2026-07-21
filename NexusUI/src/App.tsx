@@ -31,11 +31,9 @@ function App() {
         <Route
           path="/resolver/*"
           element={
-            <ProtectedRoute>
-              <ResolverRoute>
-                <ResolverApp />
-              </ResolverRoute>
-            </ProtectedRoute>
+            <ResolverRoute>
+              <ResolverApp />
+            </ResolverRoute>
           }
         />
         <Route
