@@ -6,7 +6,6 @@ import {
   Shield,
   Trash2,
   UserCheck,
-  Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -22,7 +21,7 @@ import {
 import type { ResolverApplicationRecord } from "../services/auth/resolverApplications";
 import type { AppProfile } from "../types/auth";
 
-type AdminView = "overview" | "applications" | "users" | "resolvers";
+type AdminView = "overview" | "applications" | "resolvers";
 
 export default function AdminApp() {
   const { profile, signOut } = useAuth();
@@ -55,12 +54,6 @@ export default function AdminApp() {
             icon={UserCheck}
             label="Resolver Apps"
             onClick={() => setView("applications")}
-          />
-          <NavItem
-            active={view === "users"}
-            icon={Users}
-            label="User Management"
-            onClick={() => setView("users")}
           />
           <NavItem
             active={view === "resolvers"}
@@ -97,7 +90,6 @@ export default function AdminApp() {
       <main className="flex-1 overflow-auto p-8">
         {view === "overview" ? <OverviewView /> : null}
         {view === "applications" ? <ApplicationsView /> : null}
-        {view === "users" ? <UserManagementView /> : null}
         {view === "resolvers" ? <ResolversManagementView /> : null}
       </main>
     </div>
@@ -467,134 +459,6 @@ function ApplicationModal({
             </Button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function UserManagementView() {
-  const { accessToken } = useAuth();
-  const [users, setUsers] = useState<AppProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!accessToken) {
-      setUsers([]);
-      setIsLoading(false);
-      setErrorMessage("Missing admin session token.");
-      return;
-    }
-
-    let isMounted = true;
-
-    const loadUsers = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const data = await fetchAdminUsers(accessToken);
-        if (!isMounted) {
-          return;
-        }
-
-        setUsers(data);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load users.",
-        );
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadUsers();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [accessToken]);
-
-  return (
-    <div className="mx-auto w-full max-w-5xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-        <p className="mt-1 text-slate-600">
-          Manage registered users and their platform access.
-        </p>
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 font-medium text-slate-600">
-            <tr>
-              <th className="px-6 py-4">User Details</th>
-              <th className="px-6 py-4">Join Date</th>
-              <th className="px-6 py-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {isLoading ? (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-6 py-8 text-center text-slate-500"
-                >
-                  Loading users...
-                </td>
-              </tr>
-            ) : null}
-            {!isLoading && errorMessage ? (
-              <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-red-600">
-                  {errorMessage}
-                </td>
-              </tr>
-            ) : null}
-            {!isLoading && !errorMessage && users.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-6 py-8 text-center text-slate-500"
-                >
-                  No users found.
-                </td>
-              </tr>
-            ) : null}
-            {!isLoading && !errorMessage
-              ? users.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/50">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">
-                        {user.name || "Unnamed user"}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        {user.email || "No email"} • USR-{user.id}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {formatJoinDate(user.created_at)}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                        aria-label={`Delete ${user.name || "user"}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              : null}
-          </tbody>
-        </table>
       </div>
     </div>
   );
