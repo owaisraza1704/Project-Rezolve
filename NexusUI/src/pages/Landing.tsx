@@ -28,6 +28,8 @@ const steps = [
 export default function Landing() {
   const { signOut, status, profile } = useAuth();
   const isSignedInUser = status === "authenticated" && profile?.role === "user";
+  const isSignedInResolver =
+    status === "authenticated" && profile?.role === "resolver";
   const isAuthenticated = status === "authenticated";
 
   return (
@@ -100,17 +102,35 @@ export default function Landing() {
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link to={isSignedInUser ? "/user" : "/signup"}>
-                  <Button className="h-12 px-8 text-base shadow-lg shadow-indigo-600/20">
-                    {isSignedInUser ? "Start a request" : "Create account"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/resolver">
-                  <Button variant="outline" className="h-12 px-8 text-base">
-                    Apply as resolver
-                  </Button>
-                </Link>
+                {isSignedInResolver ? (
+                  <>
+                    <Link to="/user">
+                      <Button className="h-12 px-8 text-base shadow-lg shadow-indigo-600/20">
+                        Start a request
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link to="/resolver">
+                      <Button variant="outline" className="h-12 px-8 text-base">
+                        Resolve a request
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to={isSignedInUser ? "/user" : "/signup"}>
+                      <Button className="h-12 px-8 text-base shadow-lg shadow-indigo-600/20">
+                        {isSignedInUser ? "Start a request" : "Create account"}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link to="/resolver">
+                      <Button variant="outline" className="h-12 px-8 text-base">
+                        Apply as resolver
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -179,15 +179,21 @@ export default function ResolverApp() {
             </div>
             <div className="border-t border-slate-800 p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-2 w-2 rounded-full ${stage === "approved" ? "bg-emerald-500 animate-pulse" : "bg-slate-600"}`}
-                  />
-                  <span className="text-sm font-medium text-slate-300">
-                    {stage === "approved"
-                      ? "Available (Level 3)"
-                      : "Pending approval"}
-                  </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-300">
+                    {getResolverInitials(profile?.name)}
+                  </div>
+                  <div className="min-w-0 text-sm">
+                    <p className="truncate font-medium text-slate-100">
+                      {profile?.name || "Project Nexus Resolver"}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="truncate">
+                        {profile?.email || "Signed-in resolver"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -617,6 +623,22 @@ function getInitials(value: string) {
   const parts = value.split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase());
   return initials.join("") || "NX";
+}
+
+function getResolverInitials(name: string | null | undefined) {
+  if (!name) {
+    return "NR";
+  }
+
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "NR";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
 }
 
 function formHasRequiredApplicationFields(formValues: {

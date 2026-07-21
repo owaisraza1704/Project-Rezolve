@@ -22,7 +22,7 @@ function App() {
           path="/user/*"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={['user']}>
+              <RoleRoute allowedRoles={['user', 'resolver']}>
                 <UserApp />
               </RoleRoute>
             </ProtectedRoute>
