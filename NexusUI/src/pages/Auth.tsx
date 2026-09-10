@@ -24,7 +24,7 @@ function AuthShell({
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
             <Activity className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">Project Nexus</span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">Rezolve</span>
         </Link>
 
         <h1 className="text-center text-3xl font-bold tracking-tight text-slate-900">{title}</h1>

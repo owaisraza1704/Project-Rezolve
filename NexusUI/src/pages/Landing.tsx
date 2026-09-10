@@ -42,7 +42,7 @@ export default function Landing() {
             </div>
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-indigo-600 uppercase">
-                Project Nexus
+                Rezolve
               </p>
               <p className="text-xs text-slate-500">Live support marketplace</p>
             </div>

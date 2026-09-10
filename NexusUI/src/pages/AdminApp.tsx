@@ -39,7 +39,7 @@ export default function AdminApp() {
         <div className="flex h-16 items-center border-b border-slate-800 px-6">
           <Settings className="mr-2 h-5 w-5 text-indigo-500" />
           <span className="font-bold tracking-tight text-white">
-            Nexus Admin
+            Rezolve Admin
           </span>
         </div>
         <div className="flex-1 space-y-1 p-4">

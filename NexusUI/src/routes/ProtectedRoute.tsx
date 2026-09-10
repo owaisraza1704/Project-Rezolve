@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const location = useLocation()
 
   if (status === 'booting') {
-    return <AuthBootScreen message="Checking your session and loading your Project Nexus profile." />
+    return <AuthBootScreen message="Checking your session and loading your Rezolve profile." />
   }
 
   if (status === 'error') {

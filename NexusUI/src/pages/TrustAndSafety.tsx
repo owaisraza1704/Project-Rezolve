@@ -10,7 +10,7 @@ export default function TrustAndSafety() {
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
             <Activity className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-slate-900 text-lg tracking-tight">Project Nexus</span>
+          <span className="font-bold text-slate-900 text-lg tracking-tight">Rezolve</span>
         </Link>
         <nav className="flex items-center gap-6">
           <Link to="/" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Home</Link>
@@ -30,7 +30,7 @@ export default function TrustAndSafety() {
             <div className="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-indigo-500/30">
               <Shield className="w-8 h-8 text-indigo-400" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">Trust & Safety at Nexus</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">Trust & Safety at Rezolve</h1>
             <p className="text-lg md:text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto">
               Our platform operates on speed, expertise, and absolute security. Learn how we protect your data and thoroughly vet our global network of resolvers.
             </p>
@@ -47,7 +47,7 @@ export default function TrustAndSafety() {
                 <h3 className="text-2xl font-bold text-slate-900">Rigorous Resolver Vetting</h3>
               </div>
               <p className="text-slate-600 leading-relaxed mb-6">
-                Every resolver on Project Nexus passes through a strict manual review process by our operations team. We verify professional credentials, conduct technical assessments, and continuously monitor resolution quality ratings.
+                Every resolver on Rezolve passes through a strict manual review process by our operations team. We verify professional credentials, conduct technical assessments, and continuously monitor resolution quality ratings.
               </p>
               <ul className="space-y-3">
                 {['Identity and background verification', 'Technical portfolio and credential review', 'Mandatory onboarding and code of conduct', 'Continuous quality monitoring'].map((item, i) => (

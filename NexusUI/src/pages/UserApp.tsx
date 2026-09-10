@@ -79,7 +79,7 @@ export default function UserApp() {
           >
             <Activity className="w-5 h-5 text-indigo-600" />
             <span className="font-bold text-slate-900 tracking-tight">
-              Nexus User
+              Rezolve User
             </span>
           </Link>
         </div>
@@ -105,7 +105,7 @@ export default function UserApp() {
               </div>
               <div className="min-w-0 text-sm">
                 <p className="truncate font-medium text-slate-900">
-                  {profile?.name || "Project Nexus User"}
+                  {profile?.name || "Rezolve User"}
                 </p>
                 <p className="truncate text-xs text-slate-500">
                   {profile?.email || "Signed-in user"}

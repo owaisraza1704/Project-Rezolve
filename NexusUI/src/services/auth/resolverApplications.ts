@@ -22,12 +22,35 @@ export type ResolverApplicationPayload = {
   availability: string
 }
 
+export type PublicResolverOnboardingPayload = ResolverApplicationPayload & {
+  full_name: string
+  email: string
+  password: string
+}
+
 export async function submitResolverApplication(accessToken: string, payload: ResolverApplicationPayload) {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/resolver-applications`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const message = await readErrorMessage(response)
+    throw new AuthApiError(message, response.status)
+  }
+
+  return response.json() as Promise<ResolverApplicationRecord>
+}
+
+export async function submitPublicResolverOnboarding(payload: PublicResolverOnboardingPayload) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/resolver-onboarding`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
   })

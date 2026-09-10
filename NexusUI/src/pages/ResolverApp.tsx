@@ -19,7 +19,10 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthProvider";
 import { Badge, Button } from "../components/UI";
-import { submitResolverApplication } from "../services/auth/resolverApplications";
+import {
+  submitPublicResolverOnboarding,
+  submitResolverApplication,
+} from "../services/auth/resolverApplications";
 
 type ResolverStage = "pending" | "approved";
 type ResolverView = "pool" | "active";
@@ -106,17 +109,12 @@ export default function ResolverApp() {
     };
 
   const handleApplicationSubmit = async () => {
-    if (isAnonymous) {
-      return;
-    }
-
-    if (!accessToken) {
-      setApplicationError("Sign in again before submitting your resolver application.");
-      return;
-    }
-
-    if (!formHasRequiredApplicationFields(applicationForm)) {
-      setApplicationError("Please complete the required resolver application fields.");
+    if (!hasRequiredFieldsForCurrentFlow(applicationForm, isAnonymous)) {
+      setApplicationError(
+        isAnonymous
+          ? "Please complete the account and resolver application fields."
+          : "Please complete the required resolver application fields.",
+      );
       return;
     }
 
@@ -125,16 +123,28 @@ export default function ResolverApp() {
     setApplicationSuccess(null);
 
     try {
-      await submitResolverApplication(accessToken, {
-        motivation: applicationForm.motivation.trim(),
-        experience_summary: buildExperienceSummary(applicationForm),
-        skills: buildSkills(applicationForm),
-        availability: "",
-      });
+      if (isAnonymous) {
+        await submitPublicResolverOnboarding({
+          full_name: applicationForm.fullName.trim(),
+          email: applicationForm.email.trim(),
+          password: applicationForm.password,
+          motivation: applicationForm.motivation.trim(),
+          experience_summary: buildExperienceSummary(applicationForm),
+          skills: buildSkills(applicationForm),
+          availability: "",
+        });
+      } else {
+        if (!accessToken) {
+          setApplicationError("Sign in again before submitting your resolver application.");
+          return;
+        }
+
+        await submitApplicationWithToken(accessToken, applicationForm);
+        await refreshProfile();
+      }
 
       setApplicationSuccess("Application submitted. Your resolver access will stay locked until approval.");
       setStage("pending");
-      await refreshProfile();
     } catch (error) {
       setApplicationError(
         error instanceof Error
@@ -155,7 +165,7 @@ export default function ResolverApp() {
         >
           <ShieldCheck className="mr-2 h-5 w-5 text-indigo-400" />
           <span className="font-bold tracking-tight text-slate-100">
-            Nexus Ops
+            Rezolve Ops
           </span>
         </Link>
         {isPending ? (
@@ -185,7 +195,7 @@ export default function ResolverApp() {
                   </div>
                   <div className="min-w-0 text-sm">
                     <p className="truncate font-medium text-slate-100">
-                      {profile?.name || "Project Nexus Resolver"}
+                      {profile?.name || "Rezolve Resolver"}
                     </p>
                     <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
                       <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -488,7 +498,7 @@ function PendingReviewView({
           />
 
           <ResolverTextarea
-            label={isAnonymous ? "Why do you want to join Nexus?" : "Why do you want to join Nexus?"}
+            label="Why do you want to join Rezolve?"
             placeholder={
               isAnonymous
                 ? ""
@@ -518,7 +528,10 @@ function PendingReviewView({
           <div className="flex justify-end pt-2">
             <Button
               type="submit"
-              disabled={isSubmitting || (!isAnonymous && !formHasRequiredApplicationFields(formValues))}
+              disabled={
+                isSubmitting ||
+                !hasRequiredFieldsForCurrentFlow(formValues, isAnonymous)
+              }
               className="bg-indigo-600 px-6 shadow-lg shadow-indigo-500/20 hover:bg-indigo-500"
             >
               {isAnonymous
@@ -668,6 +681,46 @@ function buildExperienceSummary(formValues: {
 
 function buildSkills(formValues: { expertise: string }) {
   return formValues.expertise.trim();
+}
+
+function hasRequiredFieldsForCurrentFlow(
+  formValues: {
+    fullName: string;
+    email: string;
+    password: string;
+    expertise: string;
+    experienceSummary: string;
+    motivation: string;
+  },
+  isAnonymous: boolean,
+) {
+  if (isAnonymous) {
+    return Boolean(
+      formValues.fullName.trim() &&
+        formValues.email.trim() &&
+        formValues.password.trim() &&
+        formHasRequiredApplicationFields(formValues),
+    );
+  }
+
+  return formHasRequiredApplicationFields(formValues);
+}
+
+async function submitApplicationWithToken(
+  token: string,
+  formValues: {
+    motivation: string;
+    expertise: string;
+    experienceSummary: string;
+    profileLink: string;
+  },
+) {
+  await submitResolverApplication(token, {
+    motivation: formValues.motivation.trim(),
+    experience_summary: buildExperienceSummary(formValues),
+    skills: buildSkills(formValues),
+    availability: "",
+  });
 }
 
 function LivePoolView({ onOpenSession }: { onOpenSession: () => void }) {
