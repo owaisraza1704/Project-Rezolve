@@ -80,6 +80,23 @@ async def get_or_create_profile_by_auth_payload(
     return profile
 
 
+async def create_profile(
+    db: AsyncSession,
+    auth_user_id: str,
+    email: str | None,
+    name: str | None,
+) -> Profile:
+    profile = Profile(
+        auth_user_id=auth_user_id,
+        email=email,
+        name=name,
+    )
+    db.add(profile)
+    await db.commit()
+    await db.refresh(profile)
+    return profile
+
+
 async def list_profiles_by_role(
     db: AsyncSession,
     role: str,

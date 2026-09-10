@@ -10,6 +10,12 @@ class ResolverApplicationSubmission(BaseModel):
     availability: str | None = None
 
 
+class PublicResolverOnboardingSubmission(ResolverApplicationSubmission):
+    full_name: str
+    email: str
+    password: str
+
+
 class ResolverApplicationResponse(BaseModel):
     id: int
     profile_id: int

@@ -4,6 +4,6 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: project_nexus
+      POSTGRES_DB: rezolve
     ports:
       - "5432:5432"

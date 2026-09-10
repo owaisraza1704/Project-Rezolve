@@ -1,1 +1,1 @@
-"""Service boundaries for Project Nexus."""
+"""Service boundaries for Rezolve."""

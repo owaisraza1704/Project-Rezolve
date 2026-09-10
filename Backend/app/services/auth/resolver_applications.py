@@ -1,5 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
+from fastapi import HTTPException
 
 from app.services.auth.models.profile import Profile
 from app.services.auth.models.resolver_application import ResolverApplication
@@ -12,6 +14,18 @@ async def create_resolver_application(
     profile_id: int,
     payload: ResolverApplicationSubmission,
 ) -> ResolverApplication:
+    existing_result = await db.execute(
+        select(ResolverApplication)
+        .where(ResolverApplication.profile_id == profile_id)
+        .where(ResolverApplication.status == "pending")
+    )
+    existing_pending = existing_result.scalar_one_or_none()
+    if existing_pending is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A pending resolver application already exists for this account.",
+        )
+
     application = ResolverApplication(
         profile_id=profile_id,
         motivation=payload.motivation,
